@@ -55,12 +55,12 @@ Net::Net(int epochs,
     // Create hiddenLayer
     hiddenLayer = new Node[hiddenLayerSize];
 
-    train(epochs, learningRate, training, testing, hiddenLayer);
+    train(epochs, learningRate, training, hiddenLayer);
 }
 
 void Net::evaluate(const std::vector<double>& input, std::vector<double>& output) const
 {
-    // For every hidden node
+    // For every hidden node    
     for (int i = 0; i < hiddenLayerSize; i++) {
 
         // Sum the weighting input
@@ -68,9 +68,9 @@ void Net::evaluate(const std::vector<double>& input, std::vector<double>& output
         for (unsigned int j = 0; j < input.size(); j++) {
             sum += weightsFromInputLayer[j][i]*input[j];
         }
-
         // And apply the sigmoid
         hiddenLayer[i].evaluateNode(sum);
+        // std::cout << hiddenLayer[i].getOutput() << " ";
     }
 
     // For every output node
@@ -84,13 +84,13 @@ void Net::evaluate(const std::vector<double>& input, std::vector<double>& output
 
         // And apply the sigmoid
         output[i] = Node::sigmoidActivation(sum);
+        // std::cout << "and ouput: " << output[i] << std::endl;
     }
 }
 
 void Net::train(int epochs, 
                 double learningRate, 
-                std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, 
-                std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing,
+                std::vector<std::pair<std::vector<double>, std::vector<double>>>& data, 
                 Node* hiddenLayer)
 {
     // Loop over training set epochs times
@@ -100,11 +100,11 @@ void Net::train(int epochs,
         double totalError = 0;
 
         // Loop over training set
-        for (unsigned int j = 0; j < training.size(); j++) {
+        for (unsigned int j = 0; j < data.size(); j++) {
 
             // Unpack example
-            const std::vector<double>& exampleInput = training[j].first;
-            const std::vector<double>& exampleOutput = training[j].second;
+            const std::vector<double>& exampleInput = data[j].first;
+            const std::vector<double>& exampleOutput = data[j].second;
             std::vector<double> computedOutput(exampleOutput.size(), 0);
             
             // Evaluate network on example
@@ -116,7 +116,7 @@ void Net::train(int epochs,
             double totalError = 0;
 
             for (unsigned int k = 0; k < computedOutput.size(); k++) {
-                error[k] = exampleOutput[k] - computedOutput[k];              
+                error[k] = exampleOutput[k] - computedOutput[k];  
                 totalError += fabs(error[k]);
             }
 
@@ -144,6 +144,7 @@ void Net::train(int epochs,
                 }
             }
         }
+        std::cout << "Error " << totalError << " in epoch " << i << std::endl;
     }
 }
 

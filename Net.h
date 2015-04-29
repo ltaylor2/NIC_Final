@@ -20,8 +20,8 @@ private:
     void train(int epochs, 
                 double learningRate, 
                 std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, 
-                std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing,
                 Node* hiddenLayer);
+    
     int hiddenLayerSize;
 
     double** weightsFromInputLayer;
