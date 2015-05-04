@@ -8,9 +8,14 @@
 Net::Net(int epochs, 
          int hiddenLayerSize_,
          double learningRate, 
-         std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, 
-         std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
-    : hiddenLayerSize(hiddenLayerSize_)
+         std::vector<std::pair<std::vector<double>, std::vector<double>>>& training,
+         bool** inputStructure_,
+         bool** hiddenStructure_)
+    : hiddenLayerSize(hiddenLayerSize_),
+      inputSize(training[0].first.size()),
+      outputSize(training[0].second.size()),
+      inputStructure(inputStructure_),
+      hiddenStructure(hiddenStructure_)
 {
     // Seed random number generator
     srand(time(NULL));
@@ -20,10 +25,6 @@ Net::Net(int epochs,
         training[i].first.push_back(1.0);
     }
     
-    // Input and output sizes
-    int inputSize = training[0].first.size();
-    int outputSize = training[0].second.size();
-
     // Create weightsFromInputLayer
     weightsFromInputLayer = new double*[inputSize];
     for (int i = 0; i < inputSize; i++) {
@@ -65,7 +66,8 @@ void Net::evaluate(const std::vector<double>& input, std::vector<double>& output
         // Sum the weighting input
         double sum = 0;
         for (unsigned int j = 0; j < input.size(); j++) {
-            sum += weightsFromInputLayer[j][i]*input[j];
+            if(inputStructure[j][i]) 
+                sum += weightsFromInputLayer[j][i]*input[j];
         }
         // And apply the sigmoid
         hiddenLayer[i].evaluateNode(sum);
@@ -78,7 +80,8 @@ void Net::evaluate(const std::vector<double>& input, std::vector<double>& output
         // Sum the weighting input
         double sum = 0;
         for (int j = 0; j < hiddenLayerSize; j++) {
-            sum += weightsFromHiddenLayer[j][i]*hiddenLayer[j].getOutput();
+            if(hiddenStructure[j][i])
+                sum += weightsFromHiddenLayer[j][i]*hiddenLayer[j].getOutput();
         }
 
         // And apply the sigmoid
@@ -129,14 +132,17 @@ void Net::train(int epochs,
                 for (unsigned int k = 0; k < computedOutput.size(); k++) {
                     double gPOut = Node::sigmoidPrimeOutput(computedOutput[k]);
                     for (int l = 0; l < hiddenLayerSize; l++) {
-                        weightedErrorSum[l] += weightsFromHiddenLayer[l][k] * error[k] * gPOut;
-                        weightsFromHiddenLayer[l][k] += learningRate * hiddenLayer[l].getInput() * error[k] * gPOut;
+                        if (hiddenStructure[l]k) {
+                            weightedErrorSum[l] += weightsFromHiddenLayer[l][k] * error[k] * gPOut;
+                            weightsFromHiddenLayer[l][k] += learningRate * hiddenLayer[l].getInput() * error[k] * gPOut;
+                        }
                     }
                 }
 
                 for (int k = 0; k < hiddenLayerSize; k++) {
                     for (unsigned int l = 0; l < exampleInput.size(); l++) {
-                        weightsFromInputLayer[l][k] += learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[l].getOutput());
+                        if (inputStructure[l][k])   
+                            weightsFromInputLayer[l][k] += learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[l].getOutput());
                     }
                 }
             }
