@@ -9,7 +9,7 @@ Node::Node()
 
 double Node::evaluateNode(double input_) {
 	input = input_;
-	output = Node::sigmoidActivation(input);
+	output = sigmoidActivation(input);
 	return output;
 }
 

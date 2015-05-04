@@ -55,7 +55,6 @@ Net::Net(int epochs,
     std::cout << "Before Hidden Layer" << std::endl;
     // Create hiddenLayer
     std::cout << hiddenLayerSize << std::endl;
-    
     hiddenLayer = new Node[hiddenLayerSize];
     std::cout << "After" << std::endl;
 
