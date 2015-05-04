@@ -41,7 +41,7 @@ Net::Net(int epochs,
     // Create weightsFromHiddenLayer
     weightsFromHiddenLayer = new double*[hiddenLayerSize];
     for (int i = 0; i < hiddenLayerSize; i++) {
-        weightsFromInputLayer[i] = new double[outputSize];
+        weightsFromHiddenLayer[i] = new double[outputSize];
     }
 
     // Initialize weightsFromHiddenLayer randomly between interval
@@ -52,11 +52,7 @@ Net::Net(int epochs,
         }
     }
 
-    std::cout << "Before Hidden Layer" << std::endl;
-    // Create hiddenLayer
-    std::cout << hiddenLayerSize << std::endl;
     hiddenLayer = new Node[hiddenLayerSize];
-    std::cout << "After" << std::endl;
 
     train(epochs, learningRate, training, hiddenLayer);
 }
@@ -115,11 +111,9 @@ void Net::train(int epochs,
 
             std::vector<double> error(computedOutput.size(), 0);
 
-            // calculate the error at each node
-            double totalError = 0;
-
+            // calculate the error at each output node
             for (unsigned int k = 0; k < computedOutput.size(); k++) {
-                error[k] = exampleOutput[k] - computedOutput[k];  
+                error[k] = exampleOutput[k] - computedOutput[k];
                 totalError += fabs(error[k]);
             }
 
@@ -147,6 +141,7 @@ void Net::train(int epochs,
                 }
             }
         }
+        //TODO nan on totalError
         std::cout << "Error " << totalError << " in epoch " << i << std::endl;
     }
 }
