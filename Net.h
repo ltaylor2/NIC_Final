@@ -25,6 +25,9 @@ public:
     bool getInputEdge(int i, int h) { return inputStructure[i][h]; }
     bool getHiddenEdge(int h, int o) { return hiddenStructure[h][o]; }
 
+    double** getInputHeuristics() { return inputHeuristics; }
+    double** getHiddenHeuristics() { return hiddenHeuristics; }
+
     int getEpochs() { return epochs; }
     double getLearningRate() { return learningRate; }
 
@@ -47,6 +50,9 @@ private:
 
     bool** inputStructure;
     bool** hiddenStructure;
+
+    double** inputHeuristics;
+    double** hiddenHeuristics;
 
     double totalError;
 };

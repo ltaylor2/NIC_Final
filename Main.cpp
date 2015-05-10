@@ -41,8 +41,12 @@ int main(int argc, char* argv[]) {
             fullHiddenStructure[i][j] = true;
     }
 
+    std::cout << "Building and training first network!" << std::endl;
+
 	Net net(epochs, hiddenLayerSize, learningRate, training, fullInputStructure, fullHiddenStructure);
     net.reportErrorOnTestingSet(testing);
+
+    std::cout << "Initial Network completed." << std::endl;
 
     bool** bestInputStructure = new bool*[inputSize];
     for (int i = 0; i < inputSize; i++) {
@@ -53,7 +57,7 @@ int main(int argc, char* argv[]) {
 
 
     bool** bestHiddenStructure = new bool*[hiddenLayerSize];
-    for (int i = 0; i < outputSize; i++) {
+    for (int i = 0; i < hiddenLayerSize; i++) {
         bestHiddenStructure[i] = new bool[outputSize];
         for (int j = 0; j < outputSize; j++)
             bestHiddenStructure[i][j] = false;
@@ -61,27 +65,28 @@ int main(int argc, char* argv[]) {
 
     // then train/test on ants, man, forever
     if (atoi(argv[5]) == 1) {
-        int numAnts = 10;
+        std::cout << "Beginning Ants." << std::endl;
+        int numAnts = 5;
         double evaporationFactor = 0.1;
         double alpha = 1;
         double beta = 3;
         
-        std::cout << "11111" << std::endl;
         Ants ants(numAnts, evaporationFactor, alpha, beta, net);
 
-        std::cout << "222222" << std::endl;
+        std::cout << "Ants Constructed." << std::endl;
 
         int numIterations = atoi(argv[6]);
+
+        std::cout << "Ants Running." << std::endl;
         ants.run(numIterations, bestInputStructure, bestHiddenStructure, training, testing);
 
-        std::cout << "33333" << std::endl;
+        std::cout << "Ants Completed." << std::endl << "Constructing best net from Ant data." << std::endl;
 
         Net antNet(epochs, hiddenLayerSize, learningRate, training, bestInputStructure, bestHiddenStructure);
         antNet.reportErrorOnTestingSet(testing);
-
-        std::cout << "44444" << std::endl;
-
     }
+
+    std::cout << "Done!" << std::endl;
 
 	return 0;
 }

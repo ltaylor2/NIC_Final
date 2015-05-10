@@ -43,12 +43,10 @@ void readDataC4(std::string fp, std::vector<std::pair<std::vector<double>, std::
                         break;
                     }
                     std::pair<std::vector<double>, std::vector<double>> example(exampleData, resultData);
-                    if (lineCount < 30000) {
+                    if (lineCount < 30000)
                         training.push_back(example);
-                    }
-                    else {
+                    else
                         testing.push_back(example);
-                    }
                 }
             }
         }

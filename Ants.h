@@ -27,8 +27,8 @@ public:
                                 std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing);
     double getProbabilityInput(int inputNode, int hiddenNode, double denom, double heuristic);
     double getProbabilityHidden(int hiddenNode, int outputNode, double denom, double heuristic);
-    double getInputDenom(double heuristic);  //TODO 2d
-    double getHiddenDenom(double heuristic); //TODO 2d
+    double getInputDenom();  
+    double getHiddenDenom();
     void updatePheromones(double error);
 
 private:
@@ -44,10 +44,14 @@ private:
     bool** tourFromHiddenLayer;
     bool** bestInputStructure;
     bool** bestHiddenStructure;
-    
+
     Net originalNet;
+
+    double** inputHeuristics;
+    double** hiddenHeuristics;
     
-    double bestError;
+    
+    double bestPercent;
     Net bestNet;
     
     double heuristic;
