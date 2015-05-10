@@ -24,23 +24,42 @@ Ants::Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_,
     bestNet(net)
 {
     
+
+    pheromoneFromInputLayer = new double*[inputSize];
+    tourFromInputLayer = new bool*[inputSize];
     bestInputStructure = new bool*[inputSize];
-    bestHiddenStructure = new bool*[hiddenSize];
     for (int i = 0; i < inputSize; i++) {
-        bestInputStructure[i] = new bool[hiddenSize];
         pheromoneFromInputLayer[i] = new double[hiddenSize];
-        for (int j = 0; j < hiddenSize; j++) {
+        tourFromInputLayer[i] = new bool[hiddenSize];
+        bestInputStructure[i] = new bool[hiddenSize];
+    }
+    
+    for (int i = 0; i < inputSize; i++) {
+        for (int j = 0; j < inputSize; j++) {
+            pheromoneFromInputLayer[i][j] = static_cast<double>(rand()) / RAND_MAX;
+            tourFromInputLayer[i][j] = false;
             bestInputStructure[i][j] = false;
-            pheromoneFromInputLayer[i][j] = static_cast<double>(rand()) / RAND_MAX;  // TODO initialize pheromone
-            bestHiddenStructure[i] = new bool[outputSize];
-            pheromoneFromHiddenLayer[i] = new double[outputSize];
-            for (int k = 0; k < outputSize; k++) {
-                bestHiddenStructure[j][k] = false;
-                pheromoneFromHiddenLayer[j][k] = static_cast<double>(rand()) / RAND_MAX;
-            }
         }
     }
 
+    pheromoneFromHiddenLayer = new double*[hiddenSize];
+    tourFromHiddenLayer = new bool*[hiddenSize];
+    bestHiddenStructure = new bool*[hiddenSize];
+    for (int i = 0; i < hiddenSize; i++) {
+        pheromoneFromHiddenLayer[i] = new double[outputSize];
+        tourFromHiddenLayer[i] = new bool[outputSize];
+        bestHiddenStructure[i] = new bool[outputSize];
+    }
+    
+    for (int i = 0; i < hiddenSize; i++) {
+        for (int j = 0; j < outputSize; j++) {
+            pheromoneFromHiddenLayer[i][j] = static_cast<double>(rand()) / RAND_MAX;
+            tourFromHiddenLayer[i][j] = false;
+            bestHiddenStructure[i][j] = false;
+        }
+    }
+
+    std::cout << "eeeeee" << std::endl;
     // TODO get and store heuristics   
     bestError = std::numeric_limits<double>::max();      
     heuristic = bestError;                            

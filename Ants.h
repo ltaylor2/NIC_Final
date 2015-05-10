@@ -40,6 +40,8 @@ private:
     double** pheromoneFromInputLayer;
     double** pheromoneFromHiddenLayer;
 
+    bool** tourFromInputLayer;
+    bool** tourFromHiddenLayer;
     bool** bestInputStructure;
     bool** bestHiddenStructure;
     

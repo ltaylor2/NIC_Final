@@ -66,13 +66,21 @@ int main(int argc, char* argv[]) {
         double alpha = 1;
         double beta = 3;
         
+        std::cout << "11111" << std::endl;
         Ants ants(numAnts, evaporationFactor, alpha, beta, net);
+
+        std::cout << "222222" << std::endl;
 
         int numIterations = atoi(argv[6]);
         ants.run(numIterations, bestInputStructure, bestHiddenStructure, training, testing);
-    
+
+        std::cout << "33333" << std::endl;
+
         Net antNet(epochs, hiddenLayerSize, learningRate, training, bestInputStructure, bestHiddenStructure);
         antNet.reportErrorOnTestingSet(testing);
+
+        std::cout << "44444" << std::endl;
+
     }
 
 	return 0;
