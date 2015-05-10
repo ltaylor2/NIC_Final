@@ -25,7 +25,7 @@ void readDataC4(std::string fp, std::vector<std::pair<std::vector<double>, std::
                     exampleData.push_back(1.0);
                 }
                 else if (c.compare("o") == 0) {
-                    exampleData.push_back(2.0);
+                    exampleData.push_back(-1.0);
                 }
                 else {
                     std::vector<double> resultData(3, 0);

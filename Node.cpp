@@ -1,6 +1,7 @@
 #include "Node.h"
 
 #include <cmath>
+#include <iostream>
 
 Node::Node()
 	: input(0),
@@ -14,7 +15,8 @@ double Node::evaluateNode(double input_) {
 }
 
 double Node::sigmoidActivation(double x) {
-    return 1/(1+ exp(-x+0.5));
+	// std::cout << "X: " << x << " to " << 1/(1 + exp(-x)) << std::endl;
+    return 1/(1 + exp(-x));
 }
 
 double Node::sigmoidPrimeOutput(double output) {

@@ -9,25 +9,27 @@
 #pragma once
 
 #include "Node.h"
+#include "Net.h"
 
 #include <queue>
 #include <vector>
 
 class Ants {
 public:
-    Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_, int inputSize_, int hiddenSize_, int outputSize_);
-    void Ants::run(int numIterations,
+    Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_, Net net);
+    void run(int numIterations,
                    bool** inputStructure,
                    bool** hiddenStructure,
-                   std::pair<std::vector<double>, std::vector<double>>>& training,
-                   std::pair<std::vector<double>, std::vector<double>>>& testing);
+                   std::vector<std::pair<std::vector<double>, std::vector<double>>>& training,
+                   std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing);
 
-    void createNetworkStructure();
+    void createNetworkStructure(std::vector<std::pair<std::vector<double>, std::vector<double>>>& training,
+                                std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing);
     double getProbabilityInput(int inputNode, int hiddenNode, double denom, double heuristic);
     double getProbabilityHidden(int hiddenNode, int outputNode, double denom, double heuristic);
-    double getInputDenom(std::vector<std::vector<double>> heuristics);
-    double getHiddenDenom(std::vector<std::vector<double>> heuristics);
-    void updatePheromones();
+    double getInputDenom(double heuristic);  //TODO 2d
+    double getHiddenDenom(double heuristic); //TODO 2d
+    void updatePheromones(double error);
 
 private:
     int numAnts;
@@ -35,12 +37,19 @@ private:
 
     int inputSize, hiddenSize, outputSize;
 
-    std::vector<std::queue<int>> networks;
-
     double** pheromoneFromInputLayer;
     double** pheromoneFromHiddenLayer;
 
-    bool** tourFromInputLayer;
-    bool** tourFromHiddenLayer;
+    bool** bestInputStructure;
+    bool** bestHiddenStructure;
+    
+    Net originalNet;
+    
+    double bestError;
+    Net bestNet;
+    
+    double heuristic;
+    
+    std::vector<Net> networks;
 };
 

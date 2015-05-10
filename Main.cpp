@@ -1,4 +1,5 @@
 #include "Net.h"
+#include "Ants.h"
 #include "readC4.h"
 
 #include <iostream>
@@ -20,53 +21,59 @@ int main(int argc, char* argv[]) {
     int epochs = atoi(argv[2]);
     double learningRate = atof(argv[3]);
 
-    int inputSize = training[0].first.size();
+    int inputSize = training[0].first.size() + 1;
     int hiddenLayerSize = atoi(argv[4]);
     int outputSize = training[0].second.size();
-    
+
     // Construct the fist network and print results
-    bool** fullInputStructure = new bool[inputSize];
+    bool** fullInputStructure = new bool*[inputSize];
     for (int i = 0; i < inputSize; i++) {
         fullInputStructure[i] = new bool[hiddenLayerSize];
-        fullInputStructure[i] = { true };
+        for (int j = 0; j < hiddenLayerSize; j++)
+            fullInputStructure[i][j] = true;
     }
 
-    bool** fullHiddenStructure = new bool[hiddenLayerSize];
-    for (int i = 0; i < outputSize; i++) {
+
+    bool** fullHiddenStructure = new bool*[hiddenLayerSize];
+    for (int i = 0; i < hiddenLayerSize; i++) {
         fullHiddenStructure[i] = new bool[outputSize];
-        fullHiddenStructure[i] = { false };
+        for (int j = 0; j < outputSize; j++)
+            fullHiddenStructure[i][j] = true;
     }
 
-	Net net(epochs, hiddenLayerSize, learningRate, training, testing, fullInputStructure, fullHiddenStructure);
+	Net net(epochs, hiddenLayerSize, learningRate, training, fullInputStructure, fullHiddenStructure);
     net.reportErrorOnTestingSet(testing);
+
+    bool** bestInputStructure = new bool*[inputSize];
+    for (int i = 0; i < inputSize; i++) {
+        bestInputStructure[i] = new bool[hiddenLayerSize];
+        for (int j = 0; j < hiddenLayerSize; j++)
+            bestInputStructure[i][j] = false;
+    }
+
+
+    bool** bestHiddenStructure = new bool*[hiddenLayerSize];
+    for (int i = 0; i < outputSize; i++) {
+        bestHiddenStructure[i] = new bool[outputSize];
+        for (int j = 0; j < outputSize; j++)
+            bestHiddenStructure[i][j] = false;
+    }
 
     // then train/test on ants, man, forever
     if (atoi(argv[5]) == 1) {
         int numAnts = 10;
-        double evaporationFactor = 0.1
+        double evaporationFactor = 0.1;
         double alpha = 1;
         double beta = 3;
         
         Ants ants(numAnts, evaporationFactor, alpha, beta, net);
-        bool** inputStructure = new bool[inputSize];
-        for (int i = 0; i < inputSize; i++) {
-            inputStructure[i] = new bool[hiddenSize];
-            inputStructure[i] = { false };
-        }
-
-        bool** hiddenStructure = new bool[hiddenSize];
-        for (int i = 0; i < outputSize; i++) {
-            hiddenStructure[i] = new bool[outputSize];
-            hiddenStructure[i] = { false };
-        }
 
         int numIterations = atoi(argv[6]);
-        ants.run(numIterations, inputStructure, hiddenStructure, training, testing);
+        ants.run(numIterations, bestInputStructure, bestHiddenStructure, training, testing);
+    
+        Net antNet(epochs, hiddenLayerSize, learningRate, training, bestInputStructure, bestHiddenStructure);
+        antNet.reportErrorOnTestingSet(testing);
     }
-
-    // train/test the resulting net
-    Net antNet(epochs, hiddenLayerSize, learningRate, training, testing, inputStructure, hiddenStructure);
-    antNet.reportErrorOnTestingSet(testing);
 
 	return 0;
 }

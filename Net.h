@@ -7,28 +7,38 @@
 
 class Net {
 public:
-    Net(int epochs, 
+    Net(int epochs_, 
         int hiddenLayerSize_,
-        double learningRate, 
+        double learningRate_, 
         std::vector<std::pair<std::vector<double>, std::vector<double>>>& training,
         bool** inputStructure,
         bool** hiddenStructure);
 
     void evaluate(const std::vector<double>& input, std::vector<double>& output) const;
-    void reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing) const;
+    double reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing);
 
     int getInputSize() { return inputSize; }
     int getHiddenLayerSize() { return hiddenLayerSize; }
     int getOutputSize() { return outputSize; }
+    double getTotalError() { return totalError; }
+
+    bool getInputEdge(int i, int h) { return inputStructure[i][h]; }
+    bool getHiddenEdge(int h, int o) { return hiddenStructure[h][o]; }
+
+    int getEpochs() { return epochs; }
+    double getLearningRate() { return learningRate; }
+
 private:    
-    void train(int epochs, 
-                double learningRate, 
-                std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, 
+    void train(std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, 
                 Node* hiddenLayer);
     
+    int epochs;
+
     int inputSize;
     int hiddenLayerSize;
     int outputSize;
+
+    double learningRate;
 
     double** weightsFromInputLayer;
     double** weightsFromHiddenLayer;
@@ -37,4 +47,6 @@ private:
 
     bool** inputStructure;
     bool** hiddenStructure;
+
+    double totalError;
 };

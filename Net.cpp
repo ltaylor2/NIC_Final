@@ -5,22 +5,25 @@
 #include <ctime>
 #include <cmath>
 
-Net::Net(int epochs, 
+Net::Net(int epochs_, 
          int hiddenLayerSize_,
-         double learningRate, 
+         double learningRate_, 
          std::vector<std::pair<std::vector<double>, std::vector<double>>>& training,
          bool** inputStructure_,
          bool** hiddenStructure_)
-    : hiddenLayerSize(hiddenLayerSize_),
-      inputSize(training[0].first.size()),
+    : epochs(epochs_), 
+      inputSize(training[0].first.size() + 1),
+      hiddenLayerSize(hiddenLayerSize_),
       outputSize(training[0].second.size()),
+      learningRate(learningRate_),
       inputStructure(inputStructure_),
-      hiddenStructure(hiddenStructure_)
+      hiddenStructure(hiddenStructure_),
+      totalError(0.0)
 {
     // Seed random number generator
     srand(time(NULL));
     
-    // Add bias node
+    // TODO change for connect 4?
     for (unsigned int i = 0; i < training.size(); i++) {
         training[i].first.push_back(1.0);
     }
@@ -55,7 +58,8 @@ Net::Net(int epochs,
 
     hiddenLayer = new Node[hiddenLayerSize];
 
-    train(epochs, learningRate, training, hiddenLayer);
+    train(training, hiddenLayer);
+
 }
 
 void Net::evaluate(const std::vector<double>& input, std::vector<double>& output) const
@@ -66,11 +70,14 @@ void Net::evaluate(const std::vector<double>& input, std::vector<double>& output
         // Sum the weighting input
         double sum = 0;
         for (unsigned int j = 0; j < input.size(); j++) {
-            if(inputStructure[j][i]) 
+            if(inputStructure[j][i]) {
                 sum += weightsFromInputLayer[j][i]*input[j];
+            }
         }
         // And apply the sigmoid
+        // std::cout << "Hidden Sum: " << sum << std::endl;
         hiddenLayer[i].evaluateNode(sum);
+
         // std::cout << hiddenLayer[i].getOutput() << " ";
     }
 
@@ -86,20 +93,16 @@ void Net::evaluate(const std::vector<double>& input, std::vector<double>& output
 
         // And apply the sigmoid
         output[i] = Node::sigmoidActivation(sum);
+        // std::cout << "Output Sum: " << sum << std::endl;
         // std::cout << "and ouput: " << output[i] << std::endl;
     }
 }
 
-void Net::train(int epochs, 
-                double learningRate, 
-                std::vector<std::pair<std::vector<double>, std::vector<double>>>& data, 
+void Net::train(std::vector<std::pair<std::vector<double>, std::vector<double>>>& data, 
                 Node* hiddenLayer)
 {
     // Loop over training set epochs times
     for (int i = 0; i < epochs; i++) {
-
-        // For reporting error on stdout
-        double totalError = 0;
 
         // Loop over training set
         for (unsigned int j = 0; j < data.size(); j++) {
@@ -107,17 +110,20 @@ void Net::train(int epochs,
             // Unpack example
             const std::vector<double>& exampleInput = data[j].first;
             const std::vector<double>& exampleOutput = data[j].second;
+
             std::vector<double> computedOutput(exampleOutput.size(), 0);
-            
+
             // Evaluate network on example
             evaluate(exampleInput, computedOutput);
 
+            totalError = 0.0;
             std::vector<double> error(computedOutput.size(), 0);
 
             // calculate the error at each output node
             for (unsigned int k = 0; k < computedOutput.size(); k++) {
                 error[k] = exampleOutput[k] - computedOutput[k];
                 totalError += fabs(error[k]);
+                // std::cout << "Error " << k << "  " << error[k] << std::endl;
             }
 
             // now backprop backwards down the neural network, moving from ouput-->hidden to hidden-->input
@@ -132,9 +138,10 @@ void Net::train(int epochs,
                 for (unsigned int k = 0; k < computedOutput.size(); k++) {
                     double gPOut = Node::sigmoidPrimeOutput(computedOutput[k]);
                     for (int l = 0; l < hiddenLayerSize; l++) {
-                        if (hiddenStructure[l]k) {
+                        if (hiddenStructure[l][k]) {
                             weightedErrorSum[l] += weightsFromHiddenLayer[l][k] * error[k] * gPOut;
-                            weightsFromHiddenLayer[l][k] += learningRate * hiddenLayer[l].getInput() * error[k] * gPOut;
+                            weightsFromHiddenLayer[l][k] += learningRate * hiddenLayer[l].getOutput() * error[k] * gPOut;
+                            // std::cout << "Error: " << error[k] << " Output: " << hiddenLayer[l].getOutput() << " gPOut: " << gPOut << std::endl;
                         }
                     }
                 }
@@ -143,19 +150,35 @@ void Net::train(int epochs,
                     for (unsigned int l = 0; l < exampleInput.size(); l++) {
                         if (inputStructure[l][k])   
                             weightsFromInputLayer[l][k] += learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[l].getOutput());
+                        // std::cout << "LR: " << learningRate << " exampleInput: " << exampleInput[l] << " weighted sum: " << weightedErrorSum[k] << " prime: " << Node::sigmoidPrimeOutput(hiddenLayer[l].getOutput()) << std::endl;
                     }
                 }
             }
         }
-        //TODO nan on totalError
+
         std::cout << "Error " << totalError << " in epoch " << i << std::endl;
+        // std::cout << "Input weights: " << std::endl;
+        // for (int h = 5; h >= 0; h--) {
+        //     for (int w = 0; w <= 6; w++) {
+        //         std::cout << weightsFromInputLayer[w][h] << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
+
+        // std::cout << "Hidden weights: " << std::endl;
+        // for (int i = 0; i < hiddenLayerSize; i++) {
+        //     for (int k = 0; k < outputSize; k++) {
+        //         std::cout << " " << weightsFromHiddenLayer[i][k] << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 }
 
-void Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing) const
+double Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
 {
     int numCorrect = 0;
-
+    totalError = 0.0;
     // Loop over testing set
     for (unsigned int i = 0; i < testing.size(); i++) {
 
@@ -165,6 +188,10 @@ void Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std
 
         double outMax = 0.0;
         int outNode = 0;
+
+        for (unsigned int j = 0; j < testing[i].second.size(); j++) {
+            totalError += testing[i].second[j] - output[j];
+        }
 
         double labeledMax = 0.0;
         int labeledNode = 0;
@@ -187,6 +214,7 @@ void Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std
     // Report to stdout
     double percentCorrect = static_cast<double>(numCorrect) / testing.size();
     std::cout << "Percentage correct on testing set: " << percentCorrect * 100 << "\%" << std::endl;
+    return totalError;
 }
 
 
