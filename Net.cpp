@@ -195,15 +195,12 @@ void Net::train(std::vector<std::pair<std::vector<double>, std::vector<double>>>
                             double weightChange = learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[k].getOutput());
                             if (weightChange != 0)
                                 inputHeuristics[l][k]++;
-                            // std::cout <<  i << "  " << weightChange << std::endl;
                             weightsFromInputLayer[l][k] += weightChange;
                         }
-                        // std::cout << "LR: " << learningRate << " exampleInput: " << exampleInput[l] << " weighted sum: " << weightedErrorSum[k] << " prime: " << Node::sigmoidPrimeOutput(hiddenLayer[k].getOutput()) << std::endl;
                     }
                 }
             }
         }
-        //std::cout << "a8" << std::endl;
 
         std::cout << "Error " << totalError << " in epoch " << i << std::endl;
     }
@@ -240,9 +237,12 @@ double Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, s
             }
         }
 
+        std::cout << "Out: " << outNode << " Label: " << labeledNode;
         if (outNode == labeledNode) {
             numCorrect++;
+            std::cout << " Correct! ";
         }
+        std::cout << std::endl;
     }
 
     // Report to stdout

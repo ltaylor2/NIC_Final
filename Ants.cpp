@@ -105,10 +105,7 @@ void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure,
 // one for the input-hidden edges and one for the hidden-output edges
 void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std::vector<double>>>& training,
                                   std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
-{
-    double inputDenom = getInputDenom();
-    double hiddenDenom = getHiddenDenom();
-                            //std::cout << "1" << std::endl;
+{                            //std::cout << "1" << std::endl;
 
     for (int a = 0; a < numAnts; a++) {
         //std::cout << "2" << std::endl;
@@ -130,24 +127,27 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
         }
 
         
+        double inputDenom = getInputDenom();
+        double hiddenDenom = getHiddenDenom();
+
         std::pair<double, double> minMaxInput = getMinMaxInputProb();
         std::pair<double, double> minMaxHidden = getMinMaxHiddenProb();
-        minMaxInput.first = minMaxInput.first / getInputDenom();
-        minMaxInput.second = minMaxInput.second / getInputDenom();
-        minMaxHidden.first = minMaxHidden.first / getHiddenDenom();
-        minMaxHidden.second = minMaxHidden.second / getHiddenDenom();
-        
-        // std::cout << "MINMAX: " << minMaxInput.first << std::endl;
-        // std::cout << "MINMAX: " << minMaxInput.second << std::endl;
-        // std::cout << "MINMAX: " << minMaxHidden.first << std::endl
-        // std::cout << "MINMAX: " << minMaxHidden.second << std::endl;
+        // minMaxInput.first = minMaxInput.first / getInputDenom();
+        // minMaxInput.second = minMaxInput.second / getInputDenom();
+        // minMaxHidden.first = minMaxHidden.first / getHiddenDenom();
+        // minMaxHidden.second = minMaxHidden.second / getHiddenDenom();
+
+        std::cout << "MINMAX: " << minMaxInput.first << std::endl;
+        std::cout << "MINMAX: " << minMaxInput.second << std::endl;
+        std::cout << "MINMAX: " << minMaxHidden.first << std::endl;
+        std::cout << "MINMAX: " << minMaxHidden.second << std::endl;
 
         for (int i = 0; i < inputSize; i++) {
             for (int h = 0; h < hiddenSize; h++) {
-                double randNum = static_cast<double>(rand()) / RAND_MAX;
+                double randNum = 3.5 * static_cast<double>(rand()) / RAND_MAX - 0.5;
                 double oldPInput = getProbabilityInput(i, h, inputDenom, inputHeuristics[i][h]);
-                // std::cout << "OLD: " << oldPInput << std::endl;
-                // std::cout << "ADJ: " << getAdjustedProbability(oldPInput, minMaxInput.first, minMaxInput.second) << std::endl;
+                std::cout << "OLD: " << oldPInput << std::endl;
+                std::cout << "ADJ: " << getAdjustedProbability(oldPInput, minMaxInput.first, minMaxInput.second) << std::endl;
                 if (getAdjustedProbability(oldPInput, minMaxInput.first, minMaxInput.second) > randNum) {
                     tourFromInputLayer[i][h] = true;
                 }
@@ -203,9 +203,10 @@ void Ants::updatePheromones(double error) {
     }
 }
 
-double Ants::getAdjustedProbability(double p, double l, double h) {
-    double s = 1 / (h - l);
-    return s*(p - l);
+double Ants::getAdjustedProbability(double p, double mean, double stdev) {
+    // double s = 1 / (h - l);
+    // return s*(p - l);
+    return (p - mean) / stdev;
 }
 
 // TODO: Check if actually returning a double
@@ -235,15 +236,27 @@ double Ants::getInputDenom() {
 
 std::pair<double, double> Ants::getMinMaxInputProb() {
     std::pair<double, double> minMax;
-    minMax.first = std::numeric_limits<double>::max();
-    minMax.second = std::numeric_limits<double>::min();
+    minMax.first = 0;
+    minMax.second = 0;
+
+    double denom = getInputDenom();
     for (int i = 0; i < inputSize; i++) {
         for (int j = 0; j < hiddenSize; j++) {
-            double p = pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta);
-            if (minMax.first > p) minMax.first = p;
-            if (minMax.second < p) minMax.second = p;
+            double score = pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta) / denom;
+            minMax.first += score;
         }
     }
+    minMax.first = minMax.first / (inputSize*hiddenSize);
+
+    for (int i = 0; i < inputSize; i++) {
+        for (int j = 0; j < hiddenSize; j++) {
+            double score = pow(minMax.first - pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta) / denom, 2);
+            minMax.second += score;
+
+        }
+    }
+    minMax.second = minMax.second / (inputSize*hiddenSize);
+    minMax.second = sqrt(minMax.second);
     return minMax;
 }
 
@@ -258,16 +271,43 @@ double Ants::getHiddenDenom() {
     return total;
 }
 
+// std::pair<double, double> Ants::getMinMaxHiddenProb() {
+//     std::pair<double, double> minMax;
+//     minMax.first = std::numeric_limits<double>::max();
+//     minMax.second = std::numeric_limits<double>::min();
+//     for (int i = 0; i < hiddenSize; i++) {
+//         for (int j = 0; j < outputSize; j++) {
+//             double p = pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta);
+//             if (minMax.first > p) minMax.first = p;
+//             if (minMax.second < p) minMax.second = p;
+//         }
+//     }
+//     return minMax;
+// }
+
+
 std::pair<double, double> Ants::getMinMaxHiddenProb() {
     std::pair<double, double> minMax;
-    minMax.first = std::numeric_limits<double>::max();
-    minMax.second = std::numeric_limits<double>::min();
+    minMax.first = 0;
+    minMax.second = 0;
+
+    double denom = getHiddenDenom();
     for (int i = 0; i < hiddenSize; i++) {
         for (int j = 0; j < outputSize; j++) {
-            double p = pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta);
-            if (minMax.first > p) minMax.first = p;
-            if (minMax.second < p) minMax.second = p;
+            double score = pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta) / denom;
+            minMax.first += score;
         }
     }
+    minMax.first = minMax.first / (inputSize*hiddenSize);
+
+    for (int i = 0; i < hiddenSize; i++) {
+        for (int j = 0; j < outputSize; j++) {
+            double score = pow(minMax.first - pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta) / denom, 2);
+            minMax.second += score;
+
+        }
+    }
+    minMax.second = minMax.second / (inputSize*hiddenSize);
+    minMax.second = sqrt(minMax.second);
     return minMax;
 }
