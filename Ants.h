@@ -32,6 +32,10 @@ public:
     void updatePheromones(double error);
 
 private:
+    double getAdjustedProbability(double p, double l, double h);
+    std::pair<double, double> getMinMaxInputProb();
+    std::pair<double, double> getMinMaxHiddenProb();
+
     int numAnts;
     double evaporationFactor, alpha, beta;
 

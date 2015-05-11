@@ -69,15 +69,17 @@ Net::Net(int epochs_,
     for (unsigned int i = 0; i < training.size(); i++)
         training[i].first.pop_back();
 
-    //finish updating heuristic information
+    // finish updating heuristic information
     for (int i = 0; i < inputSize; i++) {
         for (int h = 0; h < hiddenLayerSize; h++) {
-            inputHeuristics[i][h] = inputHeuristics[i][h] / epochs;
+            inputHeuristics[i][h] = (double)inputHeuristics[i][h] / (epochs * training.size());
+            // std::cout << inputHeuristics[i][h] << " hhh" << std::endl;
         }
     }
     for (int h = 0; h < hiddenLayerSize; h++) {
         for (int o = 0; o < outputSize; o++) {
-            hiddenHeuristics[h][o] = hiddenHeuristics[h][o] / epochs;
+            hiddenHeuristics[h][o] = (double)hiddenHeuristics[h][o] / (epochs * training.size());
+            // std::cout << hiddenHeuristics[h][o] << " hhh" << std::endl;
         }
     }
 }
@@ -170,22 +172,17 @@ void Net::train(std::vector<std::pair<std::vector<double>, std::vector<double>>>
             // for input-->hidden
             // TODO this only works if all the nodes are inter-connected
             std::vector<double> weightedErrorSum(hiddenLayerSize, 0);
-        //std::cout << "a6" << std::endl;
 
             if (totalError != 0) {
                 for (unsigned int k = 0; k < computedOutput.size(); k++) {
-
                     double gPOut = Node::sigmoidPrimeOutput(computedOutput[k]);
-                            //std::cout << "a7" << std::endl;
-
                     for (int l = 0; l < hiddenLayerSize; l++) {
-                                                    //std::cout << "bbbbbbb" << std::endl;
-
                         if (hiddenStructure[l][k]) {   
                             weightedErrorSum[l] += weightsFromHiddenLayer[l][k] * error[k] * gPOut;
                             double weightChange = learningRate * hiddenLayer[l].getOutput() * error[k] * gPOut;
                             if (weightChange != 0)
                                 hiddenHeuristics[l][k]++;
+                            // std::cout << weightChange << std::endl;
                             weightsFromHiddenLayer[l][k] += weightChange;
                             // std::cout << "Error: " << error[k] << " Output: " << hiddenLayer[l].getOutput() << " gPOut: " << gPOut << std::endl;
                         }
@@ -194,37 +191,21 @@ void Net::train(std::vector<std::pair<std::vector<double>, std::vector<double>>>
 
                 for (int k = 0; k < hiddenLayerSize; k++) {
                     for (unsigned int l = 0; l < exampleInput.size(); l++) {
-                                                                            //std::cout << "ccccccc " << l << std::endl;
-
                         if (inputStructure[l][k]) {
-                            double weightChange = learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[l].getOutput());
+                            double weightChange = learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[k].getOutput());
                             if (weightChange != 0)
                                 inputHeuristics[l][k]++;
+                            // std::cout <<  i << "  " << weightChange << std::endl;
                             weightsFromInputLayer[l][k] += weightChange;
                         }
-                        // std::cout << "LR: " << learningRate << " exampleInput: " << exampleInput[l] << " weighted sum: " << weightedErrorSum[k] << " prime: " << Node::sigmoidPrimeOutput(hiddenLayer[l].getOutput()) << std::endl;
+                        // std::cout << "LR: " << learningRate << " exampleInput: " << exampleInput[l] << " weighted sum: " << weightedErrorSum[k] << " prime: " << Node::sigmoidPrimeOutput(hiddenLayer[k].getOutput()) << std::endl;
                     }
                 }
             }
         }
         //std::cout << "a8" << std::endl;
 
-        // std::cout << "Error " << totalError << " in epoch " << i << std::endl;
-        // std::cout << "Input weights: " << std::endl;
-        // for (int h = 5; h >= 0; h--) {
-        //     for (int w = 0; w <= 6; w++) {
-        //         std::cout << weightsFromInputLayer[w][h] << " ";
-        //     }
-        //     std::cout << std::endl;
-        // }
-
-        // std::cout << "Hidden weights: " << std::endl;
-        // for (int i = 0; i < hiddenLayerSize; i++) {
-        //     for (int k = 0; k < outputSize; k++) {
-        //         std::cout << " " << weightsFromHiddenLayer[i][k] << " ";
-        //     }
-        //     std::cout << std::endl;
-        // }
+        std::cout << "Error " << totalError << " in epoch " << i << std::endl;
     }
 }
 

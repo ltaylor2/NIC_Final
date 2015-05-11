@@ -130,19 +130,36 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
         }
 
         
-        for (int i = 0; i < inputSize; i++) {
-                                        //std::cout << "4" << std::endl;
+        std::pair<double, double> minMaxInput = getMinMaxInputProb();
+        std::pair<double, double> minMaxHidden = getMinMaxHiddenProb();
+        minMaxInput.first = minMaxInput.first / getInputDenom();
+        minMaxInput.second = minMaxInput.second / getInputDenom();
+        minMaxHidden.first = minMaxHidden.first / getHiddenDenom();
+        minMaxHidden.second = minMaxHidden.second / getHiddenDenom();
+        
+        // std::cout << "MINMAX: " << minMaxInput.first << std::endl;
+        // std::cout << "MINMAX: " << minMaxInput.second << std::endl;
+        // std::cout << "MINMAX: " << minMaxHidden.first << std::endl
+        // std::cout << "MINMAX: " << minMaxHidden.second << std::endl;
 
-            double randNum = static_cast<double>(rand()) / RAND_MAX;
+        for (int i = 0; i < inputSize; i++) {
             for (int h = 0; h < hiddenSize; h++) {
-                if (getProbabilityInput(i, h, inputDenom, inputHeuristics[i][h]) > randNum) {
+                double randNum = static_cast<double>(rand()) / RAND_MAX;
+                double oldPInput = getProbabilityInput(i, h, inputDenom, inputHeuristics[i][h]);
+                // std::cout << "OLD: " << oldPInput << std::endl;
+                // std::cout << "ADJ: " << getAdjustedProbability(oldPInput, minMaxInput.first, minMaxInput.second) << std::endl;
+                if (getAdjustedProbability(oldPInput, minMaxInput.first, minMaxInput.second) > randNum) {
                     tourFromInputLayer[i][h] = true;
-                    randNum = static_cast<double>(rand()) / RAND_MAX;
-                    for (int o = 0; o < outputSize; o++) {
-                        if (getProbabilityHidden(h, o, hiddenDenom, hiddenHeuristics[h][o]) > randNum) {
-                            tourFromHiddenLayer[h][o] = true;
-                        }
-                    }
+                }
+            }
+        }
+
+        for (int h = 0; h < hiddenSize; h++) {
+            for (int o = 0; o < outputSize; o++) {
+                double randNum = static_cast<double>(rand()) / RAND_MAX;
+                double oldPHidden = getProbabilityHidden(h, o, hiddenDenom, hiddenHeuristics[h][o]);
+                if (getAdjustedProbability(oldPHidden, minMaxHidden.first, minMaxHidden.second) > randNum) {
+                    tourFromHiddenLayer[h][o] = true;
                 }
             }
         }
@@ -186,17 +203,22 @@ void Ants::updatePheromones(double error) {
     }
 }
 
+double Ants::getAdjustedProbability(double p, double l, double h) {
+    double s = 1 / (h - l);
+    return s*(p - l);
+}
+
 // TODO: Check if actually returning a double
 double Ants::getProbabilityInput(int inputNode, int hiddenNode, double denom, double heuristic) {
-    double prob = (pow(pheromoneFromInputLayer[inputNode][hiddenNode], alpha) * pow(heuristic, beta))/denom;
-    std::cout << "Input prob: " << prob << std::endl;
+    double prob = (pow(pheromoneFromInputLayer[inputNode][hiddenNode], alpha) * pow(heuristic, beta)) / denom;
+    // std::cout << "H " << heuristic << "   Input prob: " << prob << std::endl;
     return prob;
 }
 
 // TODO heuristic
 double Ants::getProbabilityHidden(int hiddenNode, int outputNode, double denom, double heuristic) {
-    double prob = (pow(pheromoneFromHiddenLayer[hiddenNode][outputNode], alpha) * pow(heuristic, beta))/denom;
-    std::cout << "Hidden prob: " << prob << std::endl;
+    double prob = (pow(pheromoneFromHiddenLayer[hiddenNode][outputNode], alpha) * pow(heuristic, beta)) / denom;
+    // std::cout << "H " << heuristic << "   Hidden prob: " << prob << std::endl;
     return prob;
 }
 
@@ -211,6 +233,20 @@ double Ants::getInputDenom() {
     return total;
 }
 
+std::pair<double, double> Ants::getMinMaxInputProb() {
+    std::pair<double, double> minMax;
+    minMax.first = std::numeric_limits<double>::max();
+    minMax.second = std::numeric_limits<double>::min();
+    for (int i = 0; i < inputSize; i++) {
+        for (int j = 0; j < hiddenSize; j++) {
+            double p = pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta);
+            if (minMax.first > p) minMax.first = p;
+            if (minMax.second < p) minMax.second = p;
+        }
+    }
+    return minMax;
+}
+
 // TODO 2d heuristics to calculate actual value
 double Ants::getHiddenDenom() {
     double total = 0.0;
@@ -222,3 +258,16 @@ double Ants::getHiddenDenom() {
     return total;
 }
 
+std::pair<double, double> Ants::getMinMaxHiddenProb() {
+    std::pair<double, double> minMax;
+    minMax.first = std::numeric_limits<double>::max();
+    minMax.second = std::numeric_limits<double>::min();
+    for (int i = 0; i < hiddenSize; i++) {
+        for (int j = 0; j < outputSize; j++) {
+            double p = pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta);
+            if (minMax.first > p) minMax.first = p;
+            if (minMax.second < p) minMax.second = p;
+        }
+    }
+    return minMax;
+}
