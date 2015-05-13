@@ -12,6 +12,8 @@ void readDataC4(std::string fp, std::vector<std::pair<std::vector<double>, std::
     if (file.is_open()) {
         std::string line;
         int lineCount = 0;
+
+        // run through the lines of data, filling them appropriately
         while (getline(file, line)) {
             lineCount++;
             std::stringstream ss(line);
@@ -28,6 +30,7 @@ void readDataC4(std::string fp, std::vector<std::pair<std::vector<double>, std::
                     exampleData.push_back(-1.0);
                 }
                 else {
+                    // translate the string marker to the correct output representation
                     std::vector<double> resultData(3, 0);
                     if (c.compare("win") == 0) {
                         resultData[1] = 1.0;
@@ -43,6 +46,7 @@ void readDataC4(std::string fp, std::vector<std::pair<std::vector<double>, std::
                         break;
                     }
                     std::pair<std::vector<double>, std::vector<double>> example(exampleData, resultData);
+                    // make the first 30000 training, the rest testing (~37,000)
                     if (lineCount < 30000)
                         training.push_back(example);
                     else

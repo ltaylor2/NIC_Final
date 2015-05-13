@@ -167,36 +167,34 @@ void Net::train(std::vector<std::pair<std::vector<double>, std::vector<double>>>
             // Here, just do hidden-->ouput, but keep track of the weighted sum
             // for input-->hidden
             std::vector<double> weightedErrorSum(hiddenLayerSize, 0);
-            if (totalError != 0) {
-                for (unsigned int k = 0; k < computedOutput.size(); k++) {
-                    double gPOut = Node::sigmoidPrimeOutput(computedOutput[k]);
-                    for (int l = 0; l < hiddenLayerSize; l++) {
-                        if (hiddenStructure[l][k]) {   
-                            weightedErrorSum[l] += weightsFromHiddenLayer[l][k] * error[k] * gPOut;
-                            double weightChange = learningRate * hiddenLayer[l].getOutput() * error[k] * gPOut;
-                            if (weightChange != 0)
-                                hiddenHeuristics[l][k]++;
-                            weightsFromHiddenLayer[l][k] += weightChange;
-                        }
+            for (unsigned int k = 0; k < computedOutput.size(); k++) {
+                double gPOut = Node::sigmoidPrimeOutput(computedOutput[k]);
+                for (int l = 0; l < hiddenLayerSize; l++) {
+                    if (hiddenStructure[l][k]) {   
+                        weightedErrorSum[l] += weightsFromHiddenLayer[l][k] * error[k] * gPOut;
+                        double weightChange = learningRate * hiddenLayer[l].getOutput() * error[k] * gPOut;
+                        if (weightChange != 0)
+                            hiddenHeuristics[l][k]++;
+                        weightsFromHiddenLayer[l][k] += weightChange;
                     }
                 }
-
-                for (int k = 0; k < hiddenLayerSize; k++) {
-                    for (unsigned int l = 0; l < exampleInput.size(); l++) {
-                        if (inputStructure[l][k]) {
-                            double weightChange = learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[k].getOutput());
-                            if (weightChange != 0)
-                                inputHeuristics[l][k]++;
-                            weightsFromInputLayer[l][k] += weightChange;
-                        }
+            }
+            // and now do hidden
+            for (int k = 0; k < hiddenLayerSize; k++) {
+                for (unsigned int l = 0; l < exampleInput.size(); l++) {
+                    if (inputStructure[l][k]) {
+                        double weightChange = learningRate * exampleInput[l] * weightedErrorSum[k] * Node::sigmoidPrimeOutput(hiddenLayer[k].getOutput());
+                        if (weightChange != 0)
+                            inputHeuristics[l][k]++;
+                        weightsFromInputLayer[l][k] += weightChange;
                     }
                 }
             }
         }
-
-        // Report error on stdout
-        std::cout << "Error " << totalError << " in epoch " << i << std::endl;
     }
+
+    // Report error on stdout
+    std::cout << "Error " << totalError << " in epoch " << i << std::endl;
 }
 
 double Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
@@ -204,19 +202,24 @@ double Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, s
     int numCorrect = 0;
     totalError = 0.0;
 
+    // for every testing sample data
     for (unsigned int i = 0; i < testing.size(); i++) {
         std::vector<double> output(testing[i].second.size(), 0);
+        // evaluate the error on the set
         evaluate(testing[i].first, output);
 
         double outMax = 0.0;
         int outNode = 0;
 
+        // add up the total error of the evaluation by adding up differences in every output node
+        // to the actual labeled answer
         for (unsigned int j = 0; j < testing[i].second.size(); j++) {
             totalError += testing[i].second[j] - output[j];
         }
 
         double labeledMax = 0.0;
         int labeledNode = 0;
+        // find the output node that represents the correct answer
         for (unsigned int j = 0; j < output.size(); j++) {
             if (output[j] > outMax) {
                 outMax = output[j];
@@ -228,11 +231,13 @@ double Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, s
             }
         }
 
+        // and if it's correct, add one to the counter
         if (outNode == labeledNode) {
             numCorrect++;
         }
     }
 
+    // the total percentage calculation for this network's testing
     double percentCorrect = static_cast<double>(numCorrect) / testing.size();
     std::cout << "Percentage correct on testing set: " << percentCorrect * 100 << "\%" << std::endl;
     return percentCorrect;

@@ -1,5 +1,5 @@
 A Novel ACO/NN Hybrid for NN Simplification on the Connect 4 Problem
-Dan Cohen (Hot Like Shakira), Josh Imhoff (Ginger Bunny), Liam Taylor (The Scientist)
+Dan Cohen (Hot Like Shakira), Josh, Liam Taylor (The Scientist)
 
 BUILD
     make

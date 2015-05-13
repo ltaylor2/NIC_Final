@@ -15,8 +15,13 @@ Ants::Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_,
     originalNet(net),
     inputHeuristics(net.getInputHeuristics()),
     hiddenHeuristics(net.getHiddenHeuristics()),
-    bestNet(net)
+    bestNet(net),
+    bestPercent(0.0)
 {
+    // Initialize the arrays that keep track of pheromone and structure
+    // first, those that track the input->hidden layer edges
+    // Boolean arrays keep track of whether or not an edge is partof the NN structure an
+    // ant produces
     pheromoneFromInputLayer = new double*[inputSize];
     tourFromInputLayer = new bool*[inputSize];
     bestInputStructure = new bool*[inputSize];
@@ -34,6 +39,7 @@ Ants::Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_,
         }
     }
 
+    // now, those that track the hidden->output layer edges
     pheromoneFromHiddenLayer = new double*[hiddenSize];
     tourFromHiddenLayer = new bool*[hiddenSize];
     bestHiddenStructure = new bool*[hiddenSize];
@@ -54,6 +60,7 @@ Ants::Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_,
 
 Ants::~Ants()
 {
+    // Destructor for our many dynamically allocated arrays
     for (int i = 0; i < inputSize; i++) {
         delete[] pheromoneFromInputLayer[i];
         delete[] tourFromInputLayer[i];
@@ -75,6 +82,8 @@ Ants::~Ants()
 
 void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure, std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
 {
+    // Run through every iteration, creating structures, testing them, and laying down pheromone based
+    // on the best structures found
     for (int i = 0; i < numIterations; i++) {
         createNetworkStructure(training, testing);
         std::cout << "Updating pheromones" << std::endl;
@@ -83,10 +92,14 @@ void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure,
 
     }
 
+    // fill the argument 2D arrays with the best structure the ants found throughout all of the iterations
     std::cout << "Returning best ant structure." << std::endl;
+
+    // first input -> hidden
     for (int i = 0; i < inputSize - 1; i++) {
         for (int h = 0; h < hiddenSize; h++) {
             inputStructure[i][h] = bestNet.getInputEdge(i, h);
+            // visualize the structure that was found
             if (inputStructure[i][h])
                 std::cout << " " << 1 << " ";
             else
@@ -95,9 +108,11 @@ void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure,
         std::cout << std::endl;
     }
 
+    // then hidden->output
     for (int h = 0; h < hiddenSize; h++) {
         for (int o = 0; o < outputSize; o++) {
             hiddenStructure[h][o] = bestNet.getHiddenEdge(h, o);
+            // visualize the structure that was found
             if (inputStructure[h][o])
                 std::cout << " " << 1 << " ";
             else
@@ -137,9 +152,12 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
         std::pair<double, double> meanStdevInput = getMeanStdevInputProb();
         std::pair<double, double> meanStdevHidden = getMeanStdevHiddenProb();
 
-        // Create tours
+        // Create tours, starting by running from every input node to every hidden
+        // node, putting each edge into the structure or not
         for (int i = 0; i < inputSize; i++) {
             for (int h = 0; h < hiddenSize; h++) {
+                // with a calculated probability, set an edge true in the tour
+                // this is based on the pheromone and heuristic levels a given edge
                 double randNum = 3.5 * static_cast<double>(rand()) / RAND_MAX - 0.5;
                 double oldPInput = getProbabilityInput(i, h, inputDenom, inputHeuristics[i][h]);
                 if (getAdjustedProbability(oldPInput, meanStdevInput.first, meanStdevInput.second) > randNum) {
@@ -147,6 +165,8 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
                 }
             }
         }
+
+        // now run from every hidden node to every output node, putting each edge into the structure or not
         for (int h = 0; h < hiddenSize; h++) {
             for (int o = 0; o < outputSize; o++) {
                 double randNum = static_cast<double>(rand()) / RAND_MAX;
@@ -170,11 +190,15 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
             bestNet = networks[i];
         }
     }
+
+    // clear this iteration's set of networks
     networks.clear();
 }
 
 void Ants::updatePheromones(double error) {
-    // Update pheromones according to standard ACO, minus evaporation
+    // Update pheromones according to ACO rules
+    // note that this is the only place pheromone changes-- no evaporation while
+    // ants walk over an edge
     for (int i = 0; i < inputSize; i++) {
         for (int h = 0; h < hiddenSize; h++) {
             for (int o = 0; o < outputSize; o++) {
@@ -196,17 +220,19 @@ double Ants::getAdjustedProbability(double p, double mean, double stdev) {
     return (p - mean) / stdev;
 }
 
+// get the unadjusted, ACO rules probability for picking a given input->hidden node
 double Ants::getProbabilityInput(int inputNode, int hiddenNode, double denom, double heuristic) {
-    double prob = (pow(pheromoneFromInputLayer[inputNode][hiddenNode], alpha) * pow(heuristic, beta)) / denom;
-    return prob;
+    return (pow(pheromoneFromInputLayer[inputNode][hiddenNode], alpha) * pow(heuristic, beta)) / denom;
 }
 
+// get the unadjusted, ACO rules probability for picking a given hidden->output node
 double Ants::getProbabilityHidden(int hiddenNode, int outputNode, double denom, double heuristic) {
-    double prob = (pow(pheromoneFromHiddenLayer[hiddenNode][outputNode], alpha) * pow(heuristic, beta)) / denom;
-    return prob;
+    return (pow(pheromoneFromHiddenLayer[hiddenNode][outputNode], alpha) * pow(heuristic, beta)) / denom;
 }
 
 double Ants::getInputDenom() {
+    // calculate the denominator for the ACO probability choosing rules, where we look at sum
+    // of heuristic and pheromone influences at each edge. In this case, only for input->hidden
     double total = 0.0;
     for (int i = 0; i < inputSize; i++) {
         for (int j = 0; j < hiddenSize; j++) {
@@ -221,6 +247,9 @@ std::pair<double, double> Ants::getMeanStdevInputProb() {
     meanStdev.first = 0;
     meanStdev.second = 0;
 
+    // calculate the mean and standard deviation for the set of unadjusted probabilities. That way,
+    // we can distribute the final probabilites reasonably across a curve
+    // mean calculation
     double denom = getInputDenom();
     for (int i = 0; i < inputSize; i++) {
         for (int j = 0; j < hiddenSize; j++) {
@@ -230,6 +259,7 @@ std::pair<double, double> Ants::getMeanStdevInputProb() {
     }
     meanStdev.first = meanStdev.first / (inputSize*hiddenSize);
 
+    // sdev calculation
     for (int i = 0; i < inputSize; i++) {
         for (int j = 0; j < hiddenSize; j++) {
             double score = pow(meanStdev.first - pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta) / denom, 2);
@@ -243,6 +273,8 @@ std::pair<double, double> Ants::getMeanStdevInputProb() {
 }
 
 double Ants::getHiddenDenom() {
+    // calculate the denominator for the ACO probability choosing rules, where we look at sum
+    // of heuristic and pheromone influences at each edge. In this case, only for hidden->output
     double total = 0.0;
     for (int i = 0; i < hiddenSize; i++) {
         for (int j = 0; j < outputSize; j++) {
@@ -252,11 +284,15 @@ double Ants::getHiddenDenom() {
     return total;
 }
 
+
 std::pair<double, double> Ants::getMeanStdevHiddenProb() {
     std::pair<double, double> meanStdev;
     meanStdev.first = 0;
     meanStdev.second = 0;
 
+    // calculate the mean and standard deviation for the set of unadjusted probabilities. That way,
+    // we can distribute the final probabilites reasonably across a curve
+    // mean calculation
     double denom = getHiddenDenom();
     for (int i = 0; i < hiddenSize; i++) {
         for (int j = 0; j < outputSize; j++) {
@@ -264,8 +300,10 @@ std::pair<double, double> Ants::getMeanStdevHiddenProb() {
             meanStdev.first += score;
         }
     }
+
     meanStdev.first = meanStdev.first / (inputSize*hiddenSize);
 
+    // sdev calculation
     for (int i = 0; i < hiddenSize; i++) {
         for (int j = 0; j < outputSize; j++) {
             double score = pow(meanStdev.first - pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta) / denom, 2);
