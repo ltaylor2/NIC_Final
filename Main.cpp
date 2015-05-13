@@ -41,12 +41,12 @@ int main(int argc, char* argv[]) {
             fullHiddenStructure[i][j] = true;
     }
 
-    std::cout << "Building and training first network!" << std::endl;
+    std::cout << "Building and training first network" << std::endl;
 
 	Net net(epochs, hiddenLayerSize, learningRate, training, fullInputStructure, fullHiddenStructure);
     net.reportErrorOnTestingSet(testing);
 
-    std::cout << "Initial Network completed." << std::endl;
+    std::cout << "Initial Network completed" << std::endl;
 
     bool** bestInputStructure = new bool*[inputSize];
     for (int i = 0; i < inputSize; i++) {
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     // then train/test on ants, man, forever
     if (atoi(argv[5]) == 1) {
-        std::cout << "Beginning Ants." << std::endl;
+        std::cout << "Beginning Ants" << std::endl;
         int numAnts = 5;
         double evaporationFactor = 0.1;
         double alpha = 1;
@@ -73,20 +73,20 @@ int main(int argc, char* argv[]) {
         
         Ants ants(numAnts, evaporationFactor, alpha, beta, net);
 
-        std::cout << "Ants Constructed." << std::endl;
+        std::cout << "Ants Constructed" << std::endl;
 
         int numIterations = atoi(argv[6]);
 
-        std::cout << "Ants Running." << std::endl;
+        std::cout << "Ants Running" << std::endl;
         ants.run(numIterations, bestInputStructure, bestHiddenStructure, training, testing);
 
-        std::cout << "Ants Completed." << std::endl << "Constructing best net from Ant data." << std::endl;
+        std::cout << "Ants Completed" << std::endl << "Constructing best net from Ant data" << std::endl;
 
         Net antNet(epochs, hiddenLayerSize, learningRate, training, bestInputStructure, bestHiddenStructure);
         antNet.reportErrorOnTestingSet(testing);
     }
 
-    std::cout << "Done!" << std::endl;
+    std::cout << "Done" << std::endl;
 
 	return 0;
 }

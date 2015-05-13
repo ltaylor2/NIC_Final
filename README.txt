@@ -1,11 +1,8 @@
-A C++ Implementation of a Perceptron Network for Digit Recongition
-Dan Cohen, Josh Imhoff, Liam Taylor
+A Novel ACO/NN Hybrid for NN Simplification on the Connect 4 Problem
+Dan Cohen (Hot Like Shakira), Josh Imhoff (Ginger Bunny), Liam Taylor (The Scientist)
 
 BUILD
     make
 
 USAGE
-    ./nn trainingFile testingFile inputRepresentation [0 = 32x32 | 1 = 8x8] epochs learningRate outputRepresentation [0 = single | 1 = multiple]
-
-NOTES
-    - will report error on training set and percentage correct on testing set for each epoch
+    ./aconn connect4DataFile numberOfEpochsForNNLearning learningRate numberOfHiddenNodes ants [0 = false | 1 = true] numberOfAntIterations

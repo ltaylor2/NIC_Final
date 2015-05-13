@@ -68,13 +68,3 @@ void printData(std::vector<std::pair<std::vector<double>, std::vector<double>>> 
         std::cout << std::endl;
     }
 }
-
-/*int main (int argc, char* argv[]) {
-    std::vector<std::pair<std::vector<double>, std::vector<double>>> training;
-    std::vector<std::pair<std::vector<double>, std::vector<double>>> testing;
-    
-    readDataC4(argv[1], training, testing);
-    std::cout << training.size() << std::endl;
-    std::cout << testing.size() << std::endl;
-    printData(testing);
-}*/

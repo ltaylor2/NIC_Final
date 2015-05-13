@@ -15,7 +15,6 @@ double Node::evaluateNode(double input_) {
 }
 
 double Node::sigmoidActivation(double x) {
-	// std::cout << "X: " << x << " to " << 1/(1 + exp(-x)) << std::endl;
     return 1/(1 + exp(-x));
 }
 

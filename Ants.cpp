@@ -1,11 +1,3 @@
-//
-//  Ant.cpp
-//  
-//
-//  Created by Daniel J. Cohen on 4/22/15.
-//
-//
-
 #include "Ants.h"
 
 #include <iostream>
@@ -25,8 +17,6 @@ Ants::Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_,
     hiddenHeuristics(net.getHiddenHeuristics()),
     bestNet(net)
 {
-    
-
     pheromoneFromInputLayer = new double*[inputSize];
     tourFromInputLayer = new bool*[inputSize];
     bestInputStructure = new bool*[inputSize];
@@ -62,20 +52,36 @@ Ants::Ants(int numAnts_, double evaporationFactor_, double alpha_, double beta_,
     }
 }
 
+Ants::~Ants()
+{
+    for (int i = 0; i < inputSize; i++) {
+        delete[] pheromoneFromInputLayer[i];
+        delete[] tourFromInputLayer[i];
+        delete[] bestInputStructure[i];
+    }
+    delete[] pheromoneFromInputLayer;
+    delete[] tourFromInputLayer;
+    delete[] bestInputStructure;
+    
+    for (int i = 0; i < hiddenSize; i++) {
+        delete[] pheromoneFromHiddenLayer[i];
+        delete[] tourFromHiddenLayer[i];
+        delete[] bestHiddenStructure[i];
+    }
+    delete[] pheromoneFromHiddenLayer;
+    delete[] tourFromHiddenLayer;
+    delete[] bestHiddenStructure;
+}
+
 void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure, std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
 {
     for (int i = 0; i < numIterations; i++) {
-                //std::cout << "a" << std::endl;
-
         createNetworkStructure(training, testing);
-                //std::cout << "b" << std::endl;
-        std::cout << "Updating pheromones." << std::endl;
+        std::cout << "Updating pheromones" << std::endl;
         updatePheromones(bestNet.getTotalError());
         std::cout << "Completed Ant iteration " << i <<  std::endl;
 
     }
-
-                        //std::cout << "d" << std::endl;
 
     std::cout << "Returning best ant structure." << std::endl;
     for (int i = 0; i < inputSize - 1; i++) {
@@ -101,80 +107,62 @@ void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure,
     }
 }
 
-// TODO: How are heuristics being passed? Currently there are 2 2D vectors
-// one for the input-hidden edges and one for the hidden-output edges
 void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std::vector<double>>>& training,
                                   std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
-{                            //std::cout << "1" << std::endl;
-
+{
     for (int a = 0; a < numAnts; a++) {
-        //std::cout << "2" << std::endl;
-
-        // initialize space for network TODO: check if actually auto-initializes to false/0?
+        // Initialize space for network
+        // IMPORANT memory leak, due to limitations in our design, getting rid of the leak
+        //          would require SIGNIFICANT refactoring
+        // NOTE the memory leak will not affect the running program
         bool** tourFromInputLayer = new bool*[inputSize];
-        bool** tourFromHiddenLayer = new bool*[hiddenSize];
         for (int i = 0; i < inputSize; i++) {
             tourFromInputLayer[i] = new bool[hiddenSize];
             for (int j = 0; j < hiddenSize; j++) {
                 tourFromInputLayer[i][j] = false;
             }
         }
+        bool** tourFromHiddenLayer = new bool*[hiddenSize];
         for (int i = 0; i < hiddenSize; i++) {
             tourFromHiddenLayer[i] = new bool[outputSize];
             for (int j = 0; j < outputSize; j ++) {
                 tourFromHiddenLayer[i][j] = false;
             }
         }
-
         
         double inputDenom = getInputDenom();
         double hiddenDenom = getHiddenDenom();
 
-        std::pair<double, double> minMaxInput = getMinMaxInputProb();
-        std::pair<double, double> minMaxHidden = getMinMaxHiddenProb();
-        // minMaxInput.first = minMaxInput.first / getInputDenom();
-        // minMaxInput.second = minMaxInput.second / getInputDenom();
-        // minMaxHidden.first = minMaxHidden.first / getHiddenDenom();
-        // minMaxHidden.second = minMaxHidden.second / getHiddenDenom();
+        // Get params for bell curve probability adjustment
+        std::pair<double, double> meanStdevInput = getMeanStdevInputProb();
+        std::pair<double, double> meanStdevHidden = getMeanStdevHiddenProb();
 
-        std::cout << "MINMAX: " << minMaxInput.first << std::endl;
-        std::cout << "MINMAX: " << minMaxInput.second << std::endl;
-        std::cout << "MINMAX: " << minMaxHidden.first << std::endl;
-        std::cout << "MINMAX: " << minMaxHidden.second << std::endl;
-
+        // Create tours
         for (int i = 0; i < inputSize; i++) {
             for (int h = 0; h < hiddenSize; h++) {
                 double randNum = 3.5 * static_cast<double>(rand()) / RAND_MAX - 0.5;
                 double oldPInput = getProbabilityInput(i, h, inputDenom, inputHeuristics[i][h]);
-                std::cout << "OLD: " << oldPInput << std::endl;
-                std::cout << "ADJ: " << getAdjustedProbability(oldPInput, minMaxInput.first, minMaxInput.second) << std::endl;
-                if (getAdjustedProbability(oldPInput, minMaxInput.first, minMaxInput.second) > randNum) {
+                if (getAdjustedProbability(oldPInput, meanStdevInput.first, meanStdevInput.second) > randNum) {
                     tourFromInputLayer[i][h] = true;
                 }
             }
         }
-
         for (int h = 0; h < hiddenSize; h++) {
             for (int o = 0; o < outputSize; o++) {
                 double randNum = static_cast<double>(rand()) / RAND_MAX;
                 double oldPHidden = getProbabilityHidden(h, o, hiddenDenom, hiddenHeuristics[h][o]);
-                if (getAdjustedProbability(oldPHidden, minMaxHidden.first, minMaxHidden.second) > randNum) {
+                if (getAdjustedProbability(oldPHidden, meanStdevHidden.first, meanStdevHidden.second) > randNum) {
                     tourFromHiddenLayer[h][o] = true;
                 }
             }
         }
-                                    //std::cout << "5" << std::endl;
 
-        // add new network to vector of networks for the iteration
+        // Add new network to vector of networks for the iteration
         Net newNet(originalNet.getEpochs(), hiddenSize, originalNet.getLearningRate(), training, tourFromInputLayer, tourFromHiddenLayer);
-                                            //std::cout << "5a" << std::endl;
-
         networks.push_back(newNet);
-                                    //std::cout << "6" << std::endl;
-
     }
 
-    // test all the networks and find the best one
+    // Test all the networks and find the best one
     for (unsigned int i = 0; i < networks.size(); i++) {
         double currPercent = networks[i].reportErrorOnTestingSet(testing);
         if (currPercent > bestPercent) {
@@ -182,11 +170,11 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
             bestNet = networks[i];
         }
     }
-
     networks.clear();
 }
 
 void Ants::updatePheromones(double error) {
+    // Update pheromones according to standard ACO, minus evaporation
     for (int i = 0; i < inputSize; i++) {
         for (int h = 0; h < hiddenSize; h++) {
             for (int o = 0; o < outputSize; o++) {
@@ -204,26 +192,20 @@ void Ants::updatePheromones(double error) {
 }
 
 double Ants::getAdjustedProbability(double p, double mean, double stdev) {
-    // double s = 1 / (h - l);
-    // return s*(p - l);
+    // Curves probabilities on bell curve, like in grading!
     return (p - mean) / stdev;
 }
 
-// TODO: Check if actually returning a double
 double Ants::getProbabilityInput(int inputNode, int hiddenNode, double denom, double heuristic) {
     double prob = (pow(pheromoneFromInputLayer[inputNode][hiddenNode], alpha) * pow(heuristic, beta)) / denom;
-    // std::cout << "H " << heuristic << "   Input prob: " << prob << std::endl;
     return prob;
 }
 
-// TODO heuristic
 double Ants::getProbabilityHidden(int hiddenNode, int outputNode, double denom, double heuristic) {
     double prob = (pow(pheromoneFromHiddenLayer[hiddenNode][outputNode], alpha) * pow(heuristic, beta)) / denom;
-    // std::cout << "H " << heuristic << "   Hidden prob: " << prob << std::endl;
     return prob;
 }
 
-// TODO heuristic
 double Ants::getInputDenom() {
     double total = 0.0;
     for (int i = 0; i < inputSize; i++) {
@@ -234,33 +216,32 @@ double Ants::getInputDenom() {
     return total;
 }
 
-std::pair<double, double> Ants::getMinMaxInputProb() {
-    std::pair<double, double> minMax;
-    minMax.first = 0;
-    minMax.second = 0;
+std::pair<double, double> Ants::getMeanStdevInputProb() {
+    std::pair<double, double> meanStdev;
+    meanStdev.first = 0;
+    meanStdev.second = 0;
 
     double denom = getInputDenom();
     for (int i = 0; i < inputSize; i++) {
         for (int j = 0; j < hiddenSize; j++) {
             double score = pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta) / denom;
-            minMax.first += score;
+            meanStdev.first += score;
         }
     }
-    minMax.first = minMax.first / (inputSize*hiddenSize);
+    meanStdev.first = meanStdev.first / (inputSize*hiddenSize);
 
     for (int i = 0; i < inputSize; i++) {
         for (int j = 0; j < hiddenSize; j++) {
-            double score = pow(minMax.first - pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta) / denom, 2);
-            minMax.second += score;
+            double score = pow(meanStdev.first - pow(pheromoneFromInputLayer[i][j], alpha) * pow(inputHeuristics[i][j], beta) / denom, 2);
+            meanStdev.second += score;
 
         }
     }
-    minMax.second = minMax.second / (inputSize*hiddenSize);
-    minMax.second = sqrt(minMax.second);
-    return minMax;
+    meanStdev.second = meanStdev.second / (inputSize*hiddenSize);
+    meanStdev.second = sqrt(meanStdev.second);
+    return meanStdev;
 }
 
-// TODO 2d heuristics to calculate actual value
 double Ants::getHiddenDenom() {
     double total = 0.0;
     for (int i = 0; i < hiddenSize; i++) {
@@ -271,43 +252,28 @@ double Ants::getHiddenDenom() {
     return total;
 }
 
-// std::pair<double, double> Ants::getMinMaxHiddenProb() {
-//     std::pair<double, double> minMax;
-//     minMax.first = std::numeric_limits<double>::max();
-//     minMax.second = std::numeric_limits<double>::min();
-//     for (int i = 0; i < hiddenSize; i++) {
-//         for (int j = 0; j < outputSize; j++) {
-//             double p = pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta);
-//             if (minMax.first > p) minMax.first = p;
-//             if (minMax.second < p) minMax.second = p;
-//         }
-//     }
-//     return minMax;
-// }
-
-
-std::pair<double, double> Ants::getMinMaxHiddenProb() {
-    std::pair<double, double> minMax;
-    minMax.first = 0;
-    minMax.second = 0;
+std::pair<double, double> Ants::getMeanStdevHiddenProb() {
+    std::pair<double, double> meanStdev;
+    meanStdev.first = 0;
+    meanStdev.second = 0;
 
     double denom = getHiddenDenom();
     for (int i = 0; i < hiddenSize; i++) {
         for (int j = 0; j < outputSize; j++) {
             double score = pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta) / denom;
-            minMax.first += score;
+            meanStdev.first += score;
         }
     }
-    minMax.first = minMax.first / (inputSize*hiddenSize);
+    meanStdev.first = meanStdev.first / (inputSize*hiddenSize);
 
     for (int i = 0; i < hiddenSize; i++) {
         for (int j = 0; j < outputSize; j++) {
-            double score = pow(minMax.first - pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta) / denom, 2);
-            minMax.second += score;
+            double score = pow(meanStdev.first - pow(pheromoneFromHiddenLayer[i][j], alpha) * pow(hiddenHeuristics[i][j], beta) / denom, 2);
+            meanStdev.second += score;
 
         }
     }
-    minMax.second = minMax.second / (inputSize*hiddenSize);
-    minMax.second = sqrt(minMax.second);
-    return minMax;
+    meanStdev.second = meanStdev.second / (inputSize*hiddenSize);
+    meanStdev.second = sqrt(meanStdev.second);
+    return meanStdev;
 }
