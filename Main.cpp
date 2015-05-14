@@ -101,8 +101,8 @@ int main(int argc, char* argv[]) {
     delete[] bestInputStructure;
 
     for (int h = 0; h < hiddenLayerSize; h++) {
-        delete[] fullHiddenStructure[i];
-        delete[] bestHiddenStructure[i];
+        delete[] fullHiddenStructure[h];
+        delete[] bestHiddenStructure[h];
     }
     delete[] fullHiddenStructure;
     delete[] bestHiddenStructure;

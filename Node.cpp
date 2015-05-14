@@ -19,5 +19,7 @@ double Node::sigmoidActivation(double x) {
 }
 
 double Node::sigmoidPrimeOutput(double output) {
+	// for a sigmoid function, g'(in) = g(in) * (1-g(in)),
+	// very helpful
     return output * (1 - output);
 }

@@ -191,10 +191,11 @@ void Net::train(std::vector<std::pair<std::vector<double>, std::vector<double>>>
                 }
             }
         }
-    }
 
     // Report error on stdout
     std::cout << "Error " << totalError << " in epoch " << i << std::endl;
+    
+    }
 }
 
 double Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
