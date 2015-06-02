@@ -63,11 +63,11 @@ void readDataC4(std::string fp, std::vector<std::pair<std::vector<double>, std::
 void printData(std::vector<std::pair<std::vector<double>, std::vector<double>>> examples) {
     for (unsigned int i = 0; i < examples.size(); i++) {
         for (unsigned int j = 0; j < examples[i].first.size(); j++) {
-            std::cout << examples[i].first[j];
+            std::cout << examples[i].first[j] << ",";
         }
-        std::cout << "     ";
+        std::cout << " // ";
         for (unsigned int j = 0; j < examples[i].second.size(); j++) {
-            std::cout << examples[i].second[j];
+            std::cout << examples[i].second[j] << ",";
         }
         std::cout << std::endl;
     }

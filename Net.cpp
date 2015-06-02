@@ -39,7 +39,7 @@ Net::Net(int epochs_,
     // Initialize weightsFromInputLayer randomly between interval -1 and 1
     for (int i = 0; i < inputSize; i++) {
         for (int j = 0; j < hiddenLayerSize; j++) {
-            weightsFromInputLayer[i][j] = 2*(static_cast<double>(rand()) / RAND_MAX) - 1;
+            weightsFromInputLayer[i][j] = 4*(static_cast<double>(rand()) / RAND_MAX) - 2;
             inputHeuristics[i][j] = 0;
         }
     }
@@ -55,7 +55,7 @@ Net::Net(int epochs_,
     // Initialize weightsFromHiddenLayer randomly between interval -1 and 1
     for (int i = 0; i < hiddenLayerSize; i++) {
         for (int j = 0; j < outputSize; j++) {
-            weightsFromHiddenLayer[i][j] = 2*(static_cast<double>(rand()) / RAND_MAX) - 1;
+            weightsFromHiddenLayer[i][j] = 4*(static_cast<double>(rand()) / RAND_MAX) - 2;
             hiddenHeuristics[i][j] = 0;
         }
     }
@@ -235,11 +235,12 @@ double Net::reportErrorOnTestingSet(std::vector<std::pair<std::vector<double>, s
         // and if it's correct, add one to the counter
         if (outNode == labeledNode) {
             numCorrect++;
+            std::cout << outNode << " / " << labeledNode << std::endl;
         }
     }
 
     // the total percentage calculation for this network's testing
     double percentCorrect = static_cast<double>(numCorrect) / testing.size();
-    std::cout << "Percentage correct on testing set: " << percentCorrect * 100 << "\%" << std::endl;
+    std::cout << "Percentage correct on testing set: " << percentCorrect * 100 << std::endl;
     return percentCorrect;
 }

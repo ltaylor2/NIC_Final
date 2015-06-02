@@ -3,7 +3,7 @@ CFLAGS= -g -Wall -std=c++0x
 
 default: compile
 
-compile: Main.o Net.o Node.o Ants.o readC4.o
+compile: Main.o Net.o Node.o Ants.o readC4.o readBC.o
 	$(CC) $? -o aconn
 
 Main.o: Main.cpp
@@ -19,6 +19,9 @@ Ants.o: Ants.cpp Ants.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 readC4.o: readC4.cpp readC4.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+readBC.o: readBC.cpp readBC.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

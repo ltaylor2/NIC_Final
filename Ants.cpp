@@ -83,7 +83,7 @@ Ants::~Ants()
 void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure, std::vector<std::pair<std::vector<double>, std::vector<double>>>& training, std::vector<std::pair<std::vector<double>, std::vector<double>>>& testing)
 {
     // Run through every iteration, creating structures, testing them, and laying down pheromone based
-    // on the best structures found
+    // on the best structures found 
     for (int i = 0; i < numIterations; i++) {
         createNetworkStructure(training, testing);
         std::cout << "Updating pheromones" << std::endl;
@@ -113,7 +113,7 @@ void Ants::run(int numIterations, bool** inputStructure, bool** hiddenStructure,
         for (int o = 0; o < outputSize; o++) {
             hiddenStructure[h][o] = bestNet.getHiddenEdge(h, o);
             // visualize the structure that was found
-            if (inputStructure[h][o])
+            if (hiddenStructure[h][o])
                 std::cout << " " << 1 << " ";
             else
                 std::cout << " " << 0 << " ";
@@ -141,7 +141,7 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
         for (int i = 0; i < hiddenSize; i++) {
             tourFromHiddenLayer[i] = new bool[outputSize];
             for (int j = 0; j < outputSize; j ++) {
-                tourFromHiddenLayer[i][j] = false;
+                tourFromHiddenLayer[i][j] = true;
             }
         }
         
@@ -171,7 +171,8 @@ void Ants::createNetworkStructure(std::vector<std::pair<std::vector<double>, std
             for (int o = 0; o < outputSize; o++) {
                 double randNum = static_cast<double>(rand()) / RAND_MAX;
                 double oldPHidden = getProbabilityHidden(h, o, hiddenDenom, hiddenHeuristics[h][o]);
-                if (getAdjustedProbability(oldPHidden, meanStdevHidden.first, meanStdevHidden.second) > randNum) {
+                // if (getAdjustedProbability(oldPHidden, meanStdevHidden.first, meanStdevHidden.second) > randNum) {
+                if (true) {
                     tourFromHiddenLayer[h][o] = true;
                 }
             }

@@ -1,6 +1,7 @@
 #include "Net.h"
 #include "Ants.h"
 #include "readC4.h"
+#include "readBC.h"
 
 #include <iostream>
 #include <cmath>
@@ -15,7 +16,7 @@ int main(int argc, char* argv[]) {
     // Read in data
 	std::vector<std::pair<std::vector<double>, std::vector<double>>> training;
     std::vector<std::pair<std::vector<double>, std::vector<double>>> testing;
-    readDataC4(argv[1], training, testing);
+    readDataBC(argv[1], training, testing);
 
     // Parse parameters
     int epochs = atoi(argv[2]);
@@ -69,10 +70,10 @@ int main(int argc, char* argv[]) {
         std::cout << "Beginning Ants" << std::endl;
 
         // setting some hard-coded parameters
-        int numAnts = 5;
-        double evaporationFactor = 0.1;
-        double alpha = 1;
-        double beta = 3;
+        int numAnts = 10;
+        double evaporationFactor = 0.05;
+        double alpha = 2;
+        double beta = 4;
         
         Ants ants(numAnts, evaporationFactor, alpha, beta, net);
 
