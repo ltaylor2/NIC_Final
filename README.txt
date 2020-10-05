@@ -1,4 +1,4 @@
-A C++ Implementation of a Perceptron Network for Digit Recongition
+A C++ Implementation of a Perceptron Network for Digit Recognition
 Dan Cohen, Josh Imhoff, Liam Taylor
 
 BUILD
